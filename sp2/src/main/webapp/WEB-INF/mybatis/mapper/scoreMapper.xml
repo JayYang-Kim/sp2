@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace는 중복이 되면 안된다. -->
+<!-- namespace는 폴더같은 개념이며 id명이 충돌되지 않게 사용된다. -->
+<!-- xml안에 >(&gt;), <(&lt;) 표현 불가 -->
+<mapper namespace="score">
+	<!-- id는 namespace안에서 중복이 되면 안된다. -->
+	<!-- parameterType : 자바쪽에서 > myBatis에 값을 넘겨줄때 사용 -->
+	<insert id="insertScore" parameterType="com.sp.score.Score">
+		INSERT INTO score(hak, name, birth, kor, eng, mat)
+			VALUES(#{hak}, #{name}, #{birth}, #{kor}, #{eng}, #{mat})
+	</insert>
+	
+	<!-- 쿼리 반복 : 리스트, 이전글, 다음글 -->
+	<!-- sql태그 : 반복적인 쿼리가 있을 경우 사용 (실행 안됨) -->
+	<!-- else는 사용불가능 -->
+	<sql id="where-list">
+		<if test="searchKey == 'hak'">
+			hak = #{searchValue}
+		</if>
+		<if test="searchKey == 'name'">
+			INSTR(name, #{searchValue}) &gt; 0
+		</if>
+		<if test="searchKey == 'birth'">
+			(TO_CHAR(birth, 'YYYYMMDD') = #{searchValue}
+			OR TO_CHAR(birth, 'YYYY-MM-DD') = #{searchValue})
+		</if>
+	</sql>
+	
+	<select id="dataCount" resultType="Integer" parameterType="map">
+		SELECT NVL(COUNT(*), 0) FROM score
+		<!-- where태그 안에 있는 조건이나 무엇인가를 만족하면 자동적으로 쿼리안에 where절이 생성된다. -->
+		<where>
+			<if test="searchValue != null and searchValue != ''">
+				<include refid="where-list"/>
+			</if> 
+		</where>
+	</select>
+	
+	<!-- parameterType="map" : mybatis-config.xml에서 별칭을  사용했기 때문에 map만 입력해서 사용 가능 / 별칭이 없으면 java.util.Map 입력해야함 -->
+	<!-- resultType : resultSet과 유사한 개념 -->
+	<!-- parameterType은 한 번만 입력 가능 (여러개를 쓸 수 없다) -->
+	<!-- 쿼리 컬럼명이 dto와 일치하지 않을 경우, 해당 컬럼의 데이터만 값이 들어오지 않는다. (오류가 발생하지 않는다) -->
+	<!-- resultType을 map으로 받으면 키는 전부 대문자로 들어가진다. (developer출력되는것과 동일) -->
+	<select id="listScore" resultType="com.sp.score.Score" parameterType="map">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM (
+		        SELECT hak, name, TO_CHAR(birth, 'YYYY-MM-DD') birth, kor, eng, mat,
+		            (kor + eng + mat) tot, (kor + eng + mat) / 3 ave
+		        FROM score
+		        <!-- where태그 안에 있는 조건이나 무엇인가를 만족하면 자동적으로 쿼리안에 where절이 생성된다. -->
+		        <where>
+					<if test="searchValue != null and searchValue != ''">
+						<include refid="where-list"/>
+					</if> 
+				</where>
+		        ORDER BY hak
+		    ) tb
+		    <![CDATA[  
+		    WHERE ROWNUM <= #{end}
+		) WHERE rnum >= #{start}
+		]]>
+	</select>
+	
+	<select id="readScore" resultType="com.sp.score.Score" parameterType="String">
+		SELECT hak, name, TO_CHAR(birth, 'YYYY-MM-DD') birth, kor, eng, mat, 
+			(kor + eng + mat) tot, (kor + eng + mat) / 3 ave
+		FROM score
+		WHERE hak = #{hak}
+	</select>
+	
+	<update id="updateScore" parameterType="com.sp.score.Score">
+		UPDATE score SET
+			name = #{name},
+			birth = #{birth},
+			kor = #{kor},
+			eng = #{eng},
+			mat = #{mat}
+		WHERE hak = #{hak}
+	</update>
+	
+	<delete id="deleteScore" parameterType="String">
+		DELETE FROM score WHERE hak = #{hak}
+	</delete>
+</mapper>
