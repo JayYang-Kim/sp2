@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bbs">
+	<insert id="insertBoard" parameterType="com.sp.bbs.Board">
+		INSERT INTO bbs(num, name, pwd, subject, content, ipAddr)
+			VALUES(bbs_seq.NEXTVAL, #{name}, #{pwd}, #{subject}, #{content}, #{ipAddr})
+	</insert>
+	
+	<!--
+		subject를 LIKE로 검색하는 경우
+		subject LIKE '%' || #{searchValue} || '%'
+		
+		CLOB를 LIKE로 검색하면 속도가 떨어지기 때문에 사용하면 안됨 
+	 -->
+	<sql id="where-list">
+		<if test="searchKey == 'all'">
+			(INSTR(subject, #{searchValue}) &gt; 0
+				OR DBMS_LOB.INSTR(content, #{searchValue}) &gt; 0)
+		</if>
+		<if test="searchKey == 'subject'">
+			INSTR(subject, #{searchValue}) &gt; 0
+		</if>
+		<if test="searchKey == 'content'">
+			DBMS_LOB.INSTR(content, #{searchValue}) &gt; 0
+		</if>
+		<if test="searchKey == 'name'">
+			INSTR(name, #{searchValue}) &gt; 0
+		</if>
+		<if test="searchKey == 'created'">
+			(TO_CHAR(created, 'YYYYMMDD') = #{searchValue}
+			OR TO_CHAR(created, 'YYYY-MM-DD') = #{searchValue})
+		</if>
+	</sql>
+	
+	<select id="dataCount" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*), 0) FROM bbs
+		<where>
+			<if test="searchValue != null and searchValue != ''">
+				<include refid="where-list"></include>
+			</if>
+		</where>
+	</select>
+	
+	<select id="listBoard" parameterType="map" resultType="com.sp.bbs.Board">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM (
+		        SELECT num, subject, name, hitCount,
+		            TO_CHAR(created, 'YYYY-MM-DD') created
+		        FROM bbs
+		        <where>
+					<if test="searchValue != null and searchValue != ''">
+						<include refid="where-list"></include>
+					</if>
+				</where>
+		        ORDER BY num DESC
+	<![CDATA[
+		    ) tb WHERE ROWNUM <= #{end}
+		) WHERE rnum >= #{start}
+	]]>
+	</select>
+	
+	<select id="readBoard" parameterType="Integer" resultType="com.sp.bbs.Board">
+		SELECT num, name, pwd, subject, content, ipAddr, hitCount, created FROM bbs
+			WHERE num = #{num}
+	</select>
+	
+	<update id="updateHitCount" parameterType="Integer">
+		UPDATE bbs SET
+		    hitCount = hitCount + 1
+		WHERE num = #{num}
+	</update>
+	
+	<!-- where태그 안에 AND가 들어왔을때 필요없는 경우 AND를 MyBatis에서 제거 -->
+	<select id="preReadBoard" parameterType="map" resultType="com.sp.bbs.Board">
+		SELECT tb.* FROM (
+			SELECT num, subject
+			FROM bbs
+			<where>
+				<if test="searchValue != null and searchValue != ''">
+					<include refid="where-list"></include>
+				</if>
+				AND (num &gt; #{num})
+			</where>
+			ORDER BY num ASC
+		)	tb WHERE ROWNUM = 1
+	</select>
+	
+	<select id="nextReadBoard" parameterType="map" resultType="com.sp.bbs.Board">
+		SELECT tb.* FROM (
+		    SELECT num, subject
+		    FROM bbs
+		    <where>
+				<if test="searchValue != null and searchValue != ''">
+					<include refid="where-list"></include>
+				</if>
+				AND (num &lt; #{num})
+			</where>
+		    ORDER BY num DESC
+		) tb WHERE ROWNUM = 1
+	</select>
+	
+	<update id="updateBoard" parameterType="com.sp.bbs.Board">
+		UPDATE bbs SET
+			name = #{name},
+			subject = #{subject},
+			content = #{content},
+			pwd = #{pwd}
+		WHERE num = #{num}
+	</update>
+	
+	<delete id="deleteBoard" parameterType="Integer">
+		DELETE FROM bbs WHERE num = #{num}
+	</delete>
+</mapper>

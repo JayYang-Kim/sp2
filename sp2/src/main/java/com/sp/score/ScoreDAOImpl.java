@@ -55,15 +55,15 @@ public class ScoreDAOImpl implements ScoreDAO {
 
 	@Override
 	public Score readScore(String hak) {
-		Score score = null;
+		Score dto = null;
 		
 		try {
-			score = sqlsession.selectOne("score.readScore", hak);
+			dto = sqlsession.selectOne("score.readScore", hak);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		return score;
+		return dto;
 	}
 
 	@Override
@@ -85,6 +85,19 @@ public class ScoreDAOImpl implements ScoreDAO {
 		
 		try {
 			result = sqlsession.delete("score.deleteScore", hak);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+
+	@Override
+	public int deleteListScore(List<String> list) {
+		int result = 0;
+		
+		try {
+			result = sqlsession.delete("score.deleteListScore", list);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

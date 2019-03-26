@@ -28,10 +28,34 @@
 				location.href = url;
 			}
 			
-			$(function(){
+			/* $(function(){
 				$("#chkAll").click(function(){
 					$(this).closest("table").find(".chk").prop("checked", this.checked);
 				});
+			}); */
+			
+			$(function() {
+				$("#chkAll").click(function(){
+					if($(this).is(":checked")) {
+						$("input[name=haks]").prop("checked", true);
+					} else {
+						$("input[name=haks]").prop("checked", false);
+					}
+				});
+			});
+			
+			$(function(){
+				$('#btnCheckDelete').click(function(){
+					var cnt = $("input[name=haks]:checked").length;
+					if(cnt == 0) {
+						alert("삭제할 게시물을 먼저 선택해주세요.");
+						return;
+					} 
+					if (confirm("선택된 게시물을 삭제 하시겠습니까?")) {
+						var f = document.deleteScoreForm;
+						f.submit();
+					}
+				});				
 			});
 		</script>
 	</head>
@@ -41,7 +65,7 @@
 				<h3>학점</h3>
 			</div>
 			<div class="mt20">
-				<form>
+				<form name="deleteScoreForm" action="<%=cp%>/score/deleteListScore" method="post">
 					<table class="tb_basic tb_hover w100p">
 						<caption>성적처리</caption>
 						<%-- <colgroup>
@@ -55,6 +79,7 @@
 							<tr>
 								<th>
 									<input type="checkbox" id="chkAll"/>
+									<input type="hidden" name="page" value="${page}">
 								</th>
 								<th>학번</th>
 								<th>이름</th>
@@ -69,7 +94,8 @@
 						</thead>
 						<tbody>
 							<c:forEach var="dto" items="${list}">
-								<tr onclick="readScore('${dto.hak}')">
+								<tr>
+								<%-- <tr onclick="readScore('${dto.hak}')"> --%>
 									<td>
 										<input type="checkbox" class="chk" name="haks" value="${dto.hak}"/>
 									</td>
@@ -92,6 +118,7 @@
 				</form>
 				<div class="t_right mt20">
 					<button type="button" class="btn btn-black" onclick="location.href='<%=cp%>/score/insert'">등록하기</button>
+					<button id="btnCheckDelete" type="button" class="btn btn-white">삭제하기</button>
 				</div>
 				<div class="t_center">
 					${paging}

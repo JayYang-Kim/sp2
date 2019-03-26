@@ -97,6 +97,14 @@ public class ScoreController {
 		return "redirect:/score/list?page=" + page;
 	}
 	
+	@RequestMapping(value="/score/deleteListScore", method=RequestMethod.POST)
+	public String deleteListScore(@RequestParam List<String> haks, @RequestParam(defaultValue="1") String page) {
+		
+		scoreService.deleteListScore(haks);
+		
+		return "redirect:/score/list?page=" + page;
+	}
+	
 	@RequestMapping(value="/score/read", method=RequestMethod.GET)
 	public String readScore(@RequestParam String hak, @RequestParam String page, Score score, Model model) {
 		

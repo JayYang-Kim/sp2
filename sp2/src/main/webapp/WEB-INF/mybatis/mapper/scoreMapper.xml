@@ -5,6 +5,19 @@
 <!-- namespace는 폴더같은 개념이며 id명이 충돌되지 않게 사용된다. -->
 <!-- xml안에 >(&gt;), <(&lt;) 표현 불가 -->
 <mapper namespace="score">
+	<!--
+		 resultMap : dto의 프로퍼티명과 DB 테이블의 컬럼명이 같지 않는 경우 일반적으로 사용
+		 컬렴명은 별명을 사용하여 프로퍼티와 일치할 수 있으므로 resultMap이 없어도 가능하다.
+	 -->
+	<resultMap type="com.sp.score.Score" id="scoreResult">
+		<result property="hak" column="hak"/>
+		<result property="name" column="name"/>
+		<result property="birth" column="birth"/>
+		<result property="kor" column="kor"/>
+		<result property="eng" column="eng"/>
+		<result property="mat" column="mat"/>
+	</resultMap>
+
 	<!-- id는 namespace안에서 중복이 되면 안된다. -->
 	<!-- parameterType : 자바쪽에서 > myBatis에 값을 넘겨줄때 사용 -->
 	<insert id="insertScore" parameterType="com.sp.score.Score">
@@ -63,12 +76,18 @@
 		]]>
 	</select>
 	
-	<select id="readScore" resultType="com.sp.score.Score" parameterType="String">
+	<select id="readScore" resultMap="scoreResult" parameterType="String">
+		SELECT hak, name, TO_CHAR(birth, 'YYYY-MM-DD') birth, kor, eng, mat
+		FROM score
+		WHERE hak = #{hak}
+	</select>
+	
+	<!-- <select id="readScore" resultType="com.sp.score.Score" parameterType="String">
 		SELECT hak, name, TO_CHAR(birth, 'YYYY-MM-DD') birth, kor, eng, mat, 
 			(kor + eng + mat) tot, (kor + eng + mat) / 3 ave
 		FROM score
 		WHERE hak = #{hak}
-	</select>
+	</select> -->
 	
 	<update id="updateScore" parameterType="com.sp.score.Score">
 		UPDATE score SET
@@ -82,5 +101,13 @@
 	
 	<delete id="deleteScore" parameterType="String">
 		DELETE FROM score WHERE hak = #{hak}
+	</delete>
+	
+	<!-- foreach : 쿼리에서 반복할때 사용하는 태그 -->
+	<delete id="deleteListScore" parameterType="java.util.List">
+		DELETE FROM score WHERE hak IN
+		<foreach collection="list" item="hak" index="index" open="(" close=")" separator=",">
+			#{hak}
+		</foreach>
 	</delete>
 </mapper>

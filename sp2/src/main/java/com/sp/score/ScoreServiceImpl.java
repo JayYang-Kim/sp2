@@ -41,4 +41,9 @@ public class ScoreServiceImpl implements ScoreService {
 	public int deleteScore(String hak) {
 		return scoreDAO.deleteScore(hak);
 	}
+
+	@Override
+	public int deleteListScore(List<String> list) {
+		return scoreDAO.deleteListScore(list);
+	}
 }

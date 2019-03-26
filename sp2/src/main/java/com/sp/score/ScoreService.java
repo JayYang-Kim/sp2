@@ -10,4 +10,5 @@ public interface ScoreService {
 	public Score readScore(String hak);
 	public int updateScore(Score dto);
 	public int deleteScore(String hak);
+	public int deleteListScore(List<String> list);
 }
